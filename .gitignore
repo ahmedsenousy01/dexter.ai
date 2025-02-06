@@ -1,0 +1,42 @@
+# dependencies
+**/node_modules/
+
+# Next.js build output
+**/.next/
+**/out/
+
+# Hono and other build output directories
+**/build/
+**/dist/
+
+# Environment variable files
+.env*
+
+# Log files
+pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage directory
+**/coverage/
+
+# pnpm lock file
+**/pnpm-lock.yaml
+
+# next.js
+**/next-env.d.ts
+
+# vercel
+**/.vercel
+
+# typescript
+**/*.tsbuildinfo
+
+# idea files
+.idea
+
+# misc
+**/.venv
+**/.python-version

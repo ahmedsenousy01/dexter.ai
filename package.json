@@ -1,0 +1,9 @@
+{
+  "name": "dexter.ai",
+  "version": "1.0.0",
+  "description": "smart cyber security ai assistant",
+  "scripts": {
+    "start:all": "pnpx concurrently \"pnpm --filter web run dev\" \"pnpm --filter server run dev\" \"cd agent && uv run python main.py\""
+  },
+  "license": "MIT"
+}
