@@ -1,0 +1,59 @@
+name: Lint and Format
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Create pip cache directory
+        run: mkdir -p /home/runner/.cache/pip
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install and setup uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="/root/.cargo/bin:$PATH"
+          cd agent
+          if [ ! -f "pyproject.toml" ]; then
+            uv init
+          fi
+          uv sync --all-extras
+
+      - name: Install dependencies
+        run: pnpm install:all
+
+      - name: Fix and format code
+        run: |
+          pnpm format:write
+          pnpm lint:fix
+
+      - name: Run format check
+        run: pnpm format:check
+
+      - name: Run lint check
+        run: pnpm lint
