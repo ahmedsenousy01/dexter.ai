@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "check": "eslint . && tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,json,yml,yaml}\" --cache",
