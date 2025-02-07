@@ -2,8 +2,24 @@
   "name": "dexter.ai",
   "version": "1.0.0",
   "description": "smart cyber security ai assistant",
+  "private": true,
   "scripts": {
-    "start:all": "pnpx concurrently \"pnpm --filter web run dev\" \"pnpm --filter server run dev\" \"cd agent && uv run python main.py\""
+    "start:all": "pnpx concurrently \"pnpm --filter web run dev\" \"pnpm --filter server run dev\" \"cd agent && uv run main.py\"",
+    "format:check": "pnpx concurrently \"prettier --check \"**/*.{ts,tsx,js,jsx,mdx,json,yaml,yml}\" --cache\" \"cd agent && uv tool run ruff check\"",
+    "format:write": "pnpx concurrently \"prettier --write \"**/*.{ts,tsx,js,jsx,mdx,json,yaml,yml}\" --cache\" \"cd agent && uv tool run ruff format\"",
+    "lint": "pnpm --filter web lint && pnpm --filter server lint && cd agent && uv tool run ruff check",
+    "lint:fix": "pnpm --filter web lint:fix && pnpm --filter server lint:fix && cd agent && uv tool run ruff check",
+    "clean": "rm -rf node_modules **/node_modules .next **/.next build **/build",
+    "install:all": "pnpx concurrently \"pnpm install --filter web\" \"pnpm install --filter server\" \"cd agent && uv sync --all-extras && cd ..\"",
+    "reset": "pnpm clean && pnpm install:all"
   },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.4.2"
+  },
+  "workspaces": [
+    "web",
+    "server"
+  ],
   "license": "MIT"
 }
