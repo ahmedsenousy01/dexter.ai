@@ -1,0 +1,46 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/db.sqlite
+    volumes:
+      - sqlite-data:/app/data
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks:
+      - dexter-network
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - agent
+    restart: unless-stopped
+    networks:
+      - dexter-network
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    restart: unless-stopped
+    networks:
+      - dexter-network
+
+networks:
+  dexter-network:
+    driver: bridge
+
+volumes:
+  sqlite-data:

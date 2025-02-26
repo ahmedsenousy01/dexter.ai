@@ -1,0 +1,17 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Install uv
+RUN pip install --no-cache uv
+
+# Copy agent files
+COPY agent/pyproject.toml agent/uv.lock ./
+
+# Set up Python environment
+RUN uv sync --all-extras
+
+# Copy agent code
+COPY agent .
+
+CMD ["python", "main.py"] 
