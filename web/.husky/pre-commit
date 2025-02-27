@@ -1,0 +1,2 @@
+pnpm format:write
+pnpm lint:fix

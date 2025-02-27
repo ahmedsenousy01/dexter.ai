@@ -4,12 +4,15 @@ import { Hono } from "hono";
 const app = new Hono();
 
 app.get("/", (c) => {
-  return c.json({ message: "Hello Hono!" });
+  return c.text("Hello Hono!");
 });
 
-const port = 5000;
-
-serve({
-  fetch: app.fetch,
-  port,
-});
+serve(
+  {
+    fetch: app.fetch,
+    port: 3000
+  },
+  (info) => {
+    console.log(`Server is running on http://localhost:${info.port}`);
+  }
+);

@@ -1,9 +1,8 @@
 from typing import Dict, List, Optional, TypedDict
 
+from core.rag import model, rag_retrieval
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
-
-from core.rag import model, rag_retrieval
 
 
 # Define the state
