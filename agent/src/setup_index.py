@@ -1,7 +1,7 @@
 import os
 
 import PyPDF2
-from config import (
+from config.config import (
     DATA_DIR,
     EMBEDDING_MODEL_NAME,
     FAISS_INDEX_PATH,
@@ -43,45 +43,49 @@ def create_faiss_index():
         # Process PDF into structured JSON
         processor = DocumentProcessor(PDF_PATH)
         json_data = processor.convert_to_json()
-        print("✅ PDF processed into structured JSON")
+        print(
+            f"✅ PDF processed into structured JSON: {len(json_data['requirements'])} requirements found"
+        )
 
         # Prepare chunks with metadata
         chunks = []
         metadata_list = []
 
         # Process each requirement
-        for req in json_data["requirements"]:
+        for req in json_data.get("requirements", []):
+            print(f"Processing requirement {req.get('number', 'unknown')}")
             # Main requirement chunk
-            req_text = (
-                f"Requirement {req['number']}: {req['title']}\n\n{req['content']}"
-            )
+            req_text = f"Requirement {req.get('number', 'unknown')}: {req.get('title', 'unknown')}\n\n{req.get('content', '')}"
             chunks.append(req_text)
             metadata_list.append(
                 {
                     "type": "requirement",
-                    "number": req["number"],
-                    "title": req["title"],
+                    "number": req.get("number", "unknown"),
+                    "title": req.get("title", "unknown"),
                     "version": json_data["metadata"]["version"],
                 }
             )
 
             # Process subrequirements
             for subreq in req.get("subrequirements", []):
-                subreq_text = (
-                    f"{subreq['number']} {subreq['title']}\n\n{subreq['content']}"
-                )
+                print(f"  Processing subrequirement {subreq.get('number', 'unknown')}")
+                subreq_text = f"{subreq.get('number', 'unknown')} {subreq.get('title', 'unknown')}\n\n{subreq.get('content', '')}"
                 chunks.append(subreq_text)
                 metadata_list.append(
                     {
                         "type": "subrequirement",
-                        "number": subreq["number"],
-                        "parent_requirement": req["number"],
-                        "title": subreq["title"],
+                        "number": subreq.get("number", "unknown"),
+                        "parent_requirement": req.get("number", "unknown"),
+                        "title": subreq.get("title", "unknown"),
                         "version": json_data["metadata"]["version"],
                     }
                 )
 
         print(f"✅ Created {len(chunks)} structured chunks with metadata")
+
+        if not chunks:
+            print("❌ No chunks were created. Check the document processing.")
+            return
 
         # Create embeddings
         print("\n🔤 Creating embeddings...")

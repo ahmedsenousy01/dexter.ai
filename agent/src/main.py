@@ -18,12 +18,12 @@ class ConversationState(TypedDict):
 def understand_query(state: Dict) -> Dict:
     """LLM determines if query needs security standards context"""
     try:
-        query = state["messages"][-1].content
+        query = state["messages"][-1]
         previous_messages = state["messages"][:-1]
 
         conversation_context = "\n".join(
             [
-                f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
+                f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg}"
                 for msg in previous_messages[-3:]
                 if isinstance(msg, (HumanMessage, AIMessage))
             ]
@@ -76,8 +76,8 @@ OUTPUT: Respond with only 'true' or 'false'"""
         state["needs_pci_context"] = needs_context
         return state
 
-    except Exception:
-        state["needs_pci_context"] = False
+    except Exception as e:
+        state["needs_pci_context"] = f"Error: {e}"
         return state
 
 
@@ -85,12 +85,12 @@ def get_pci_context(state: Dict) -> Dict:
     """RAG tool to retrieve relevant security standards context"""
     try:
         if state["needs_pci_context"]:
-            current_query = state["messages"][-1].content
+            current_query = state["messages"][-1]
             previous_messages = state["messages"][:-1]
 
             recent_conversation = "\n".join(
                 [
-                    f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
+                    f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg}"
                     for msg in previous_messages[-3:]
                     if isinstance(msg, (HumanMessage, AIMessage))
                 ]
@@ -130,8 +130,8 @@ FOCUS: Find exact matches from the standards, including requirement text, testin
             context = rag_retrieval(enhanced_query)
             state["pci_context"] = context
         return state
-    except Exception:
-        state["pci_context"] = ""
+    except Exception as e:
+        state["pci_context"] = f"Error: {e}"
         return state
 
 
@@ -233,8 +233,7 @@ workflow.add_node("generate_response", generate_response)
 workflow.add_edge(START, "understand")
 workflow.add_conditional_edges(
     "understand",
-    lambda x: "get_context" if x["needs_pci_context"] else "generate_response",
-    {"get_context": "get_context", "generate_response": "generate_response"},
+    lambda state: "get_context" if state["needs_pci_context"] else "generate_response",
 )
 workflow.add_edge("get_context", "generate_response")
 workflow.add_edge("generate_response", END)
