@@ -1,35 +1,34 @@
-from typing import Dict, List, Optional, TypedDict, Annotated
-from datetime import datetime
-import json
-from langgraph.graph import StateGraph, END, START
-from langgraph.prebuilt import ToolNode
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from agent.tools import (
-    compliance_checker,
-    policy_generator,
-    risk_assessor,
-    implementation_planner
-)
-from agent.rag import retriever, model, rag_retrieval
+from typing import Dict, List, Optional, TypedDict
+
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langgraph.graph import END, START, StateGraph
+
+from core.rag import model, rag_retrieval
+
 
 # Define the state
 class ConversationState(TypedDict):
     """State for the conversation flow"""
+
     messages: List[HumanMessage | AIMessage | SystemMessage]
     needs_pci_context: bool
     pci_context: Optional[str]
+
 
 def understand_query(state: Dict) -> Dict:
     """LLM determines if query needs security standards context"""
     try:
         query = state["messages"][-1].content
         previous_messages = state["messages"][:-1]
-        
-        conversation_context = "\n".join([
-            f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
-            for msg in previous_messages[-3:] if isinstance(msg, (HumanMessage, AIMessage))
-        ])
-        
+
+        conversation_context = "\n".join(
+            [
+                f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
+                for msg in previous_messages[-3:]
+                if isinstance(msg, (HumanMessage, AIMessage))
+            ]
+        )
+
         prompt = f"""You are Dexter.ai, a friendly and knowledgeable security and compliance consultant. Your task is to determine if the query needs specific security standard information to provide an accurate response.
 
 CONVERSATION HISTORY:
@@ -72,14 +71,15 @@ DECISION CRITERIA:
 OUTPUT: Respond with only 'true' or 'false'"""
 
         response = model.generate_content(prompt)
-        needs_context = response.text.strip().lower() == 'true'
-        
+        needs_context = response.text.strip().lower() == "true"
+
         state["needs_pci_context"] = needs_context
         return state
 
-    except Exception as e:
+    except Exception:
         state["needs_pci_context"] = False
         return state
+
 
 def get_pci_context(state: Dict) -> Dict:
     """RAG tool to retrieve relevant security standards context"""
@@ -87,12 +87,15 @@ def get_pci_context(state: Dict) -> Dict:
         if state["needs_pci_context"]:
             current_query = state["messages"][-1].content
             previous_messages = state["messages"][:-1]
-            
-            recent_conversation = "\n".join([
-                f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
-                for msg in previous_messages[-3:] if isinstance(msg, (HumanMessage, AIMessage))
-            ])
-            
+
+            recent_conversation = "\n".join(
+                [
+                    f"{'User' if isinstance(msg, HumanMessage) else 'Assistant'}: {msg.content}"
+                    for msg in previous_messages[-3:]
+                    if isinstance(msg, (HumanMessage, AIMessage))
+                ]
+            )
+
             enhanced_query = f"""CONTEXT RETRIEVAL QUERY
 
 CONVERSATION HISTORY:
@@ -123,19 +126,20 @@ SEARCH OBJECTIVES:
    - Technical specifications
 
 FOCUS: Find exact matches from the standards, including requirement text, testing procedures, and guidance."""
-            
+
             context = rag_retrieval(enhanced_query)
             state["pci_context"] = context
         return state
-    except Exception as e:
+    except Exception:
         state["pci_context"] = ""
         return state
+
 
 def generate_response(state: Dict) -> Dict:
     """LLM generates response using its knowledge and context if available"""
     try:
-        query = state["messages"][-1].content
-        
+        query = state["messages"][-1]
+
         if state["needs_pci_context"] and state["pci_context"]:
             prompt = f"""You are Dexter.ai, a helpful and friendly consultant. You provide accurate information from security standards while maintaining a natural conversation style.
 
@@ -208,8 +212,14 @@ Remember:
         return state
 
     except Exception as e:
-        state["messages"].append(AIMessage(content=f"I encountered an error. Could you rephrase your question?"))
+        state["messages"].append(
+            AIMessage(
+                content=f"I encountered an error. Could you rephrase your question? Error: {e}"
+            )
+        )
+        print(f"Error: {e}")
         return state
+
 
 # Initialize the graph
 workflow = StateGraph(ConversationState)
@@ -224,10 +234,7 @@ workflow.add_edge(START, "understand")
 workflow.add_conditional_edges(
     "understand",
     lambda x: "get_context" if x["needs_pci_context"] else "generate_response",
-    {
-        "get_context": "get_context",
-        "generate_response": "generate_response"
-    }
+    {"get_context": "get_context", "generate_response": "generate_response"},
 )
 workflow.add_edge("get_context", "generate_response")
 workflow.add_edge("generate_response", END)
@@ -235,44 +242,50 @@ workflow.add_edge("generate_response", END)
 # Compile the graph
 app = workflow.compile()
 
+
 def main():
     """Interactive conversation loop"""
     print("\n=== Dexter.ai ===")
-    print("Hi! I'm Dexter, and I'm here to help with any security or compliance questions you might have.")
+    print(
+        "Hi! I'm Dexter, and I'm here to help with any security or compliance questions you might have."
+    )
     print("What's on your mind?\n")
-    
+
     while True:
         try:
             query = input("You: ").strip()
-            
+
             if not query:
                 continue
-                
-            if query.lower() in ['exit', 'quit', 'bye']:
+
+            if query.lower() in ["exit", "quit", "bye"]:
                 print("\nThanks for chatting! Have a great day!\n")
                 break
-            
+
             # Initialize state for this query
             state = {
                 "messages": [
-                    SystemMessage(content="""You are Dexter.ai, a helpful and friendly consultant. While you have expertise in security and compliance, you speak like a helpful friend having a natural conversation. Keep responses natural and conversational, avoid being overly formal or repeatedly mentioning your expertise."""),
-                    HumanMessage(content=query)
+                    SystemMessage(
+                        content="""You are Dexter.ai, a helpful and friendly consultant. While you have expertise in security and compliance, you speak like a helpful friend having a natural conversation. Keep responses natural and conversational, avoid being overly formal or repeatedly mentioning your expertise."""
+                    ),
+                    HumanMessage(content=query),
                 ],
                 "needs_pci_context": False,
-                "pci_context": None
+                "pci_context": None,
             }
-            
+
             # Process through the graph
             result = app.invoke(state)
-            
+
             # Print the response
             print(f"\nDexter.ai: {result['messages'][-1].content}\n")
-            
+
         except KeyboardInterrupt:
             print("\nBye! Take care!\n")
             break
-        except Exception as e:
-            print(f"\nOops, something went wrong. Mind trying that again?")
+        except Exception:
+            print("\nOops, something went wrong. Mind trying that again?")
+
 
 if __name__ == "__main__":
     main()

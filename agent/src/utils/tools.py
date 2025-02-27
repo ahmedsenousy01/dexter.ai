@@ -1,14 +1,15 @@
-from typing import Dict, List, Optional
-from langchain_core.tools import tool
 import json
 from datetime import datetime
-from agent.rag import retriever, model  # Import RAG components
+
+from core.rag import model, retriever  # Import RAG components
+from langchain_core.tools import tool
+
 
 @tool
 def compliance_checker(requirements: str) -> str:
     """
     Analyzes specific PCI DSS requirements and provides compliance guidance.
-    
+
     Args:
         requirements: Description of requirements to check
     Returns:
@@ -19,16 +20,18 @@ def compliance_checker(requirements: str) -> str:
         docs = retriever.invoke(
             f"PCI DSS requirements and controls related to: {requirements}"
         )
-        
+
         # Combine document contents for context
-        pci_dss_context = "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        pci_dss_context = (
+            "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        )
 
         # Create analysis prompt with fallback to general knowledge
         analysis_prompt = f"""You are Dexter.ai, a compliance specialist. Analyze the following PCI DSS requirements and provide a detailed compliance review. 
 
 Requirements to Check: {requirements}
 
-{f'PCI DSS Context: {pci_dss_context}' if pci_dss_context else 'Note: Using general security and compliance knowledge.'}
+{f"PCI DSS Context: {pci_dss_context}" if pci_dss_context else "Note: Using general security and compliance knowledge."}
 
 Structure your response into the following sections:
 1. **Requirements Mapped**:
@@ -47,22 +50,31 @@ Structure your response into the following sections:
 
         # Generate analysis using LLM
         response = model.generate_content(analysis_prompt)
-        return response.text.strip() if response.text.strip() else json.dumps({
-            "error": "Could not generate analysis. Please provide more specific requirements.",
-            "timestamp": datetime.now().isoformat()
-        })
+        return (
+            response.text.strip()
+            if response.text.strip()
+            else json.dumps(
+                {
+                    "error": "Could not generate analysis. Please provide more specific requirements.",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+        )
 
     except Exception as e:
-        return json.dumps({
-            "error": f"Error in compliance analysis: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        })
+        return json.dumps(
+            {
+                "error": f"Error in compliance analysis: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
 
 @tool
 def policy_generator(policy_type: str) -> str:
     """
     Generates policy templates based on PCI DSS requirements or general security best practices.
-    
+
     Args:
         policy_type: Type of policy to generate
     Returns:
@@ -73,19 +85,21 @@ def policy_generator(policy_type: str) -> str:
         docs = retriever.invoke(
             f"PCI DSS requirements and controls for {policy_type} policy"
         )
-        
+
         # Combine document contents for context
-        pci_dss_context = "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        pci_dss_context = (
+            "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        )
 
         # Create policy generation prompt
-        policy_prompt = f"""You are Dexter.ai, creating a detailed policy for {'''PCI DSS compliance''' if pci_dss_context else 'security compliance'}. 
+        policy_prompt = f"""You are Dexter.ai, creating a detailed policy for {'''PCI DSS compliance''' if pci_dss_context else "security compliance"}. 
 
 Policy Type: {policy_type}
-{f'PCI DSS Context: {pci_dss_context}' if pci_dss_context else 'Note: Using general security and compliance knowledge.'}
+{f"PCI DSS Context: {pci_dss_context}" if pci_dss_context else "Note: Using general security and compliance knowledge."}
 
 **Policy Breakdown**:
 1. **Policy Overview**: 
-   - Provide an introduction to the policy's purpose and why it's critical for {'''PCI DSS compliance''' if pci_dss_context else 'security compliance'}.
+   - Provide an introduction to the policy's purpose and why it's critical for {'''PCI DSS compliance''' if pci_dss_context else "security compliance"}.
 
 2. **Scope and Applicability**: 
    - Define who and what is affected by the policy.
@@ -106,22 +120,31 @@ Format the response as a detailed JSON policy document."""
 
         # Generate policy using LLM
         response = model.generate_content(policy_prompt)
-        return response.text.strip() if response.text.strip() else json.dumps({
-            "error": "Could not generate policy. Please specify a valid policy type.",
-            "timestamp": datetime.now().isoformat()
-        })
+        return (
+            response.text.strip()
+            if response.text.strip()
+            else json.dumps(
+                {
+                    "error": "Could not generate policy. Please specify a valid policy type.",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+        )
 
     except Exception as e:
-        return json.dumps({
-            "error": f"Error in policy generation: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        })
+        return json.dumps(
+            {
+                "error": f"Error in policy generation: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
 
 @tool
 def risk_assessor(scenario: str) -> str:
     """
     Performs intelligent risk assessment using PCI DSS context or general security principles.
-    
+
     Args:
         scenario: Detailed description of the security scenario to assess
     Returns:
@@ -132,15 +155,17 @@ def risk_assessor(scenario: str) -> str:
         docs = retriever.invoke(
             f"PCI DSS requirements and controls related to: {scenario}"
         )
-        
+
         # Combine document contents for context
-        pci_dss_context = "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        pci_dss_context = (
+            "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        )
 
         # Create comprehensive analysis prompt
         analysis_prompt = f"""You are Dexter.ai, performing a comprehensive risk assessment for a security scenario. 
 
 Scenario: {scenario}
-{f'PCI DSS Context: {pci_dss_context}' if pci_dss_context else 'Note: Using general security and risk assessment knowledge.'}
+{f"PCI DSS Context: {pci_dss_context}" if pci_dss_context else "Note: Using general security and risk assessment knowledge."}
 
 **Assessment Structure**:
 1. **Executive Summary**: 
@@ -149,8 +174,8 @@ Scenario: {scenario}
 2. **Risk Identification**: 
    - List and assess potential risks in the given scenario.
 
-3. **{'''PCI DSS Requirements Analysis''' if pci_dss_context else 'Security Requirements Analysis'}**: 
-   - {'''Detail the PCI DSS requirements that apply to the scenario.''' if pci_dss_context else 'Detail the security requirements and standards that apply to the scenario.'}
+3. **{'''PCI DSS Requirements Analysis''' if pci_dss_context else "Security Requirements Analysis"}**: 
+   - {'''Detail the PCI DSS requirements that apply to the scenario.''' if pci_dss_context else "Detail the security requirements and standards that apply to the scenario."}
 
 4. **Required Controls**: 
    - Define the necessary technical and operational controls to mitigate risks.
@@ -165,7 +190,7 @@ Format the response as a detailed JSON assessment document."""
 
         # Generate risk assessment using LLM
         response = model.generate_content(analysis_prompt)
-        
+
         if response.text.strip():
             assessment = {
                 "timestamp": datetime.now().isoformat(),
@@ -174,27 +199,34 @@ Format the response as a detailed JSON assessment document."""
                 "metadata": {
                     "assessment_type": "comprehensive",
                     "confidence_level": "high",
-                    "framework": "PCI DSS 4.0" if pci_dss_context else "General Security Best Practices"
-                }
+                    "framework": "PCI DSS 4.0"
+                    if pci_dss_context
+                    else "General Security Best Practices",
+                },
             }
             return json.dumps(assessment, indent=2)
-        
-        return json.dumps({
-            "error": "Could not generate risk assessment. Please try again with more specific scenario details.",
-            "timestamp": datetime.now().isoformat()
-        })
+
+        return json.dumps(
+            {
+                "error": "Could not generate risk assessment. Please try again with more specific scenario details.",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     except Exception as e:
-        return json.dumps({
-            "error": f"Error during risk assessment: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        })
+        return json.dumps(
+            {
+                "error": f"Error during risk assessment: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
 
 @tool
 def implementation_planner(requirement: str) -> str:
     """
     Creates implementation plans based on PCI DSS requirements or security best practices.
-    
+
     Args:
         requirement: The requirement to plan for
     Returns:
@@ -210,15 +242,17 @@ def implementation_planner(requirement: str) -> str:
             - Implementation guidance
             - Technical requirements"""
         )
-        
+
         # Combine document contents for context
-        pci_dss_context = "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        pci_dss_context = (
+            "\n\n".join([doc.page_content for doc in docs]) if docs else ""
+        )
 
         # Create implementation planning prompt
-        planning_prompt = f"""You are Dexter.ai, generating an implementation plan for {'''PCI DSS compliance''' if pci_dss_context else 'security compliance'}. 
+        planning_prompt = f"""You are Dexter.ai, generating an implementation plan for {'''PCI DSS compliance''' if pci_dss_context else "security compliance"}. 
 
 Requirement: {requirement}
-{f'PCI DSS Context: {pci_dss_context}' if pci_dss_context else 'Note: Using general security implementation knowledge.'}
+{f"PCI DSS Context: {pci_dss_context}" if pci_dss_context else "Note: Using general security implementation knowledge."}
 
 **Plan Structure**:
 1. **Overview**: 
@@ -247,13 +281,21 @@ Format the response as a detailed JSON implementation plan."""
 
         # Generate plan using LLM
         response = model.generate_content(planning_prompt)
-        return response.text.strip() if response.text.strip() else json.dumps({
-            "error": "Could not generate implementation plan. Please provide more specific requirements.",
-            "timestamp": datetime.now().isoformat()
-        })
+        return (
+            response.text.strip()
+            if response.text.strip()
+            else json.dumps(
+                {
+                    "error": "Could not generate implementation plan. Please provide more specific requirements.",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+        )
 
     except Exception as e:
-        return json.dumps({
-            "error": f"Error in implementation planning: {str(e)}",
-            "timestamp": datetime.now().isoformat()
-        }) 
+        return json.dumps(
+            {
+                "error": f"Error in implementation planning: {str(e)}",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )

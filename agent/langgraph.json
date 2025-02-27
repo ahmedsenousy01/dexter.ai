@@ -1,0 +1,8 @@
+{
+  "dockerfile_lines": [],
+  "graphs": {
+    "main": "./src/main.py:app"
+  },
+  "python_version": "3.13",
+  "dependencies": ["."]
+}
