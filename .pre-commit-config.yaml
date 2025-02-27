@@ -7,9 +7,11 @@ repos:
       - id: ruff
         types_or: [python, pyi]
         args: [--fix]
+        files: ^(web|server|agent)/.*\.(py|pyi)$
       # Run the formatter.
       - id: ruff-format
         types_or: [python, pyi]
+        files: ^(web|server|agent)/.*\.(py|pyi)$
 
   - repo: local
     hooks:
@@ -17,7 +19,7 @@ repos:
         name: Web Format
         entry: bash -c 'cd web && pnpm format:write'
         language: system
-        files: ^web/.*\.(ts|tsx|js|jsx|json|css|scss)$
+        files: ^web/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
 
       - id: web-lint
