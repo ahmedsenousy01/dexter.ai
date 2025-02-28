@@ -7,38 +7,24 @@ repos:
       - id: ruff
         types_or: [python, pyi]
         args: [--fix]
-        files: ^(web|server|agent)/.*\.(py|pyi)$
+        files: ^(web|agent)/.*\.(py|pyi)$
       # Run the formatter.
       - id: ruff-format
         types_or: [python, pyi]
-        files: ^(web|server|agent)/.*\.(py|pyi)$
+        files: ^(web|agent)/.*\.(py|pyi)$
 
   - repo: local
     hooks:
       - id: web-format
         name: Web Format
-        entry: bash -c 'cd web && pnpm format:write'
+        entry: bash -c 'cd web && pnpm format:write && cd .. && git add web/'
         language: system
         files: ^web/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
 
       - id: web-lint
         name: Web Lint
-        entry: bash -c 'cd web && pnpm lint:fix'
+        entry: bash -c 'cd web && pnpm lint:fix && cd .. && git add web/'
         language: system
         files: ^web/.*\.(ts|tsx|js|jsx)$
-        pass_filenames: false
-
-      - id: server-format
-        name: Server Format
-        entry: bash -c 'cd server && pnpm format:write'
-        language: system
-        files: ^server/.*\.(ts|tsx|js|jsx|json)$
-        pass_filenames: false
-
-      - id: server-lint
-        name: Server Lint
-        entry: bash -c 'cd server && pnpm lint:fix'
-        language: system
-        files: ^server/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false

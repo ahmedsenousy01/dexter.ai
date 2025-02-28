@@ -1,25 +1,25 @@
 import { FlatCompat } from "@eslint/eslintrc";
 
 const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
+  baseDirectory: import.meta.dirname
 });
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
   {
-    ignores: [".next/*", "node_modules/*"],
+    ignores: [".next/*", "node_modules/*"]
   },
   ...compat.config({
     root: true,
     parser: "@typescript-eslint/parser",
     parserOptions: {
-      project: true,
+      project: true
     },
     plugins: ["@typescript-eslint"],
     extends: [
       "next/core-web-vitals",
       "plugin:@typescript-eslint/recommended-type-checked",
-      "plugin:@typescript-eslint/stylistic-type-checked",
+      "plugin:@typescript-eslint/stylistic-type-checked"
     ],
     rules: {
       "@typescript-eslint/array-type": "off",
@@ -28,26 +28,26 @@ const config = [
         "warn",
         {
           prefer: "type-imports",
-          fixStyle: "inline-type-imports",
-        },
+          fixStyle: "inline-type-imports"
+        }
       ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {
-          argsIgnorePattern: "^_",
-        },
+          argsIgnorePattern: "^_"
+        }
       ],
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-misused-promises": [
         "error",
         {
           checksVoidReturn: {
-            attributes: false,
-          },
-        },
-      ],
-    },
-  }),
+            attributes: false
+          }
+        }
+      ]
+    }
+  })
 ];
 
 export default config;
