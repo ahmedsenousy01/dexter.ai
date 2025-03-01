@@ -3,6 +3,7 @@
   "graphs": {
     "main": "./src/main.py:app"
   },
+  "env": ".env.dev",
   "python_version": "3.13",
   "dependencies": ["."],
   "pyproject": "./pyproject.toml"

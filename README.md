@@ -27,6 +27,7 @@ While tools like ChatGPT provide general-purpose AI capabilities, Dexter is tail
 - Docker and Docker Compose
 - Python 3.13+ (for development)
 - Node.js 20+ (for development)
+- Rust 1.79+ (for development)
 
 ### Prerequisites
 
@@ -146,17 +147,62 @@ The `dexter.sh` script provides several commands to manage the application:
 
 For development, you can run the services separately:
 
-### Agent Development
+### Prerequisites
+
+- Python 3.13+
+- Node.js 20+
+- Rust 1.79+
+
+### Install Development Tools
+
+We provide a convenient script to install all required development tools:
+
+```bash
+# Make the script executable
+chmod +x scripts/install_dev_tools.sh
+
+# Run the installation script
+./scripts/install_dev_tools.sh
+```
+
+This script installs:
+
+- Rust (via rustup)
+- Node.js v20 (via NVM)
+- uv (Python package manager)
+
+The script includes status checks to verify each tool is installed correctly.
+
+### Development Mode
+
+You can use the `dexter.sh` script to run the application in development mode:
+
+```bash
+# Start LangGraph API in development mode
+./dexter.sh dev
+
+# In a separate terminal, start the web application in development mode
+./dexter.sh dev-web
+```
+
+The development mode provides:
+
+1. Automatic environment setup (creates necessary .env files if they don't exist)
+2. Checks for required development tools and installs them if needed
+3. Runs the LangGraph API in development mode with hot reloading
+4. Runs the web application with hot reloading
+
+### Manual Development Setup
+
+If you prefer to start services manually:
+
+#### Agent Development
 
 ```bash
 cd agent
-# Install dependencies using UV
-uv venv
-uv pip install --upgrade "langgraph-cli[inmem]"
-uv pip install -e .
 
 # Start the LangGraph development server
-langgraph dev
+uv run langgraph dev --config langgraph-dev.json --no-browser
 ```
 
 The LangGraph server will be available at:
@@ -165,13 +211,22 @@ The LangGraph server will be available at:
 - Docs: http://localhost:2024/docs
 - LangGraph Studio Web UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
 
-### Web Development
+#### Web Development
 
 ```bash
 cd web
 pnpm install
 pnpm dev
 ```
+
+### Development Services
+
+When running in development mode, the following services will be available:
+
+- LangGraph API: http://localhost:2024
+- LangGraph API Docs: http://localhost:2024/docs
+- LangGraph Studio: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+- Web Application: http://localhost:3000
 
 ---
 

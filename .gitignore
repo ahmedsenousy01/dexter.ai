@@ -18,6 +18,8 @@
 **/.env.local
 **/.env.*.local
 **/*.pem
+!**/.env.example
+!**/.env.dev.example
 
 # Debug logs
 **/logs/

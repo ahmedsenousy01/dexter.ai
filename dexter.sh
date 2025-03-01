@@ -28,8 +28,15 @@ function show_usage {
   echo -e "  ${GREEN}status${NC}      - Check the status of all services"
   echo -e "  ${GREEN}test-api${NC}    - Test if the LangGraph API is running correctly"
   echo -e "  ${GREEN}clean${NC}       - Stop services and remove volumes"
+  echo -e "  ${GREEN}dev${NC}         - Start services in development mode"
+  echo -e "  ${GREEN}dev-web${NC}     - Start web application in development mode"
   echo -e "  ${GREEN}help${NC}        - Show this help message"
   echo ""
+}
+
+# Function to check if a command exists
+function command_exists {
+  command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if the env files exist
@@ -191,6 +198,171 @@ function clean_stack {
   docker compose -f "$COMPOSE_FILE" --env-file "$AGENT_ENV_FILE" down -v
 }
 
+# Function to check for required development tools
+function check_dev_tools {
+  echo -e "${GREEN}Checking for required development tools...${NC}"
+  local missing_tools=false
+  
+  if ! command_exists rustc; then
+    echo -e "${YELLOW}⚠️ Rust is not installed.${NC}"
+    missing_tools=true
+  fi
+  
+  if ! command_exists node; then
+    echo -e "${YELLOW}⚠️ Node.js is not installed.${NC}"
+    missing_tools=true
+  fi
+  
+  if ! command_exists uv; then
+    echo -e "${YELLOW}⚠️ uv is not installed.${NC}"
+    missing_tools=true
+  fi
+  
+  # Check for pnpm
+  if ! command_exists pnpm; then
+    echo -e "${YELLOW}⚠️ pnpm is not installed. Installing now...${NC}"
+    npm install -g pnpm
+    if [ $? -eq 0 ]; then
+      echo -e "${GREEN}✅ pnpm installed successfully!${NC}"
+    else
+      echo -e "${RED}❌ pnpm installation failed!${NC}"
+      missing_tools=true
+    fi
+  fi
+  
+  # Run installation script if tools are missing
+  if [ "$missing_tools" = true ]; then
+    echo -e "${YELLOW}Some development tools are missing. Running installation script...${NC}"
+    
+    if [ -f "${SCRIPT_DIR}/scripts/install_dev_tools.sh" ]; then
+      chmod +x "${SCRIPT_DIR}/scripts/install_dev_tools.sh"
+      "${SCRIPT_DIR}/scripts/install_dev_tools.sh"
+      
+      # Verify installation was successful
+      local install_failed=false
+      if ! command_exists rustc; then
+        echo -e "${RED}❌ Rust installation failed.${NC}"
+        install_failed=true
+      fi
+      
+      if ! command_exists node; then
+        echo -e "${RED}❌ Node.js installation failed.${NC}"
+        install_failed=true
+      fi
+      
+      if ! command_exists uv; then
+        echo -e "${RED}❌ uv installation failed.${NC}"
+        install_failed=true
+      fi
+      
+      if [ "$install_failed" = true ]; then
+        echo -e "${RED}❌ Some tools could not be installed. Please install them manually.${NC}"
+        exit 1
+      fi
+    else
+      echo -e "${RED}❌ Installation script not found at ${SCRIPT_DIR}/scripts/install_dev_tools.sh${NC}"
+      echo -e "Please install the required tools manually or create the installation script."
+      exit 1
+    fi
+  fi
+  
+  echo -e "${GREEN}✅ All development tools are installed!${NC}"
+}
+
+# Function to create development environment files
+function create_dev_env_files {
+  # Check for web/.env
+  if [ ! -f "web/.env" ]; then
+    echo -e "${YELLOW}Creating web/.env file...${NC}"
+    mkdir -p web
+    cat > web/.env << EOL
+# Web application configuration
+NODE_ENV=development
+DATABASE_URL=file:./data/db.sqlite
+LANGGRAPH_API_URL=http://localhost:2024
+EOL
+    echo -e "${GREEN}✅ web/.env created successfully!${NC}"
+  fi
+  
+  # Check for agent/.env
+  if [ ! -f "agent/.env" ]; then
+    echo -e "${YELLOW}Creating agent/.env file...${NC}"
+    mkdir -p agent
+    cat > agent/.env << EOL
+# API Keys
+GOOGLE_API_KEY="your-google-api-key"
+OPENAI_API_KEY="your-openai-api-key"
+LANGSMITH_API_KEY="your-langsmith-api-key"
+
+# Database configuration
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5433
+
+# Service URIs
+REDIS_URI=redis://localhost:6379
+POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+EOL
+    echo -e "${GREEN}✅ agent/.env created successfully!${NC}"
+    echo -e "${YELLOW}⚠️ Please update agent/.env with your actual API keys${NC}"
+  fi
+}
+
+# Function to start LangGraph API in development mode
+function start_dev_langgraph {
+  echo -e "${GREEN}Starting LangGraph API in development mode...${NC}"
+  
+  # Check if port 2024 is already in use
+  if lsof -Pi :2024 -sTCP:LISTEN -t >/dev/null ; then
+    echo -e "${YELLOW}⚠️ Port 2024 is already in use. LangGraph API might already be running.${NC}"
+  else
+    # Start LangGraph API in the background
+    (cd agent && uv run langgraph dev --config langgraph-dev.json --no-browser) &
+    LANGGRAPH_PID=$!
+    echo -e "${GREEN}✅ LangGraph API started with PID: $LANGGRAPH_PID${NC}"
+    
+    # Give LangGraph API time to start
+    sleep 5
+  fi
+  
+  echo ""
+  echo -e "${GREEN}✅ LangGraph API is now running!${NC}"
+  echo -e "📊 LangGraph API: ${YELLOW}http://localhost:2024${NC}"
+  echo -e "📝 LangGraph Studio: ${YELLOW}https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024${NC}"
+  echo -e "💻 Web Application: ${YELLOW}http://localhost:3000${NC}"
+  echo ""
+  echo -e "To start the web application only, run: ${YELLOW}$0 dev-web${NC}"
+  echo ""
+  echo -e "Press ${YELLOW}Ctrl+C${NC} to stop the LangGraph API"
+  
+  # Handle shutdown for LangGraph API
+  trap "kill $LANGGRAPH_PID 2>/dev/null; echo -e '${RED}🛑 LangGraph API stopped${NC}'; exit 0" INT TERM
+  
+  # Wait for LangGraph API process to finish
+  wait $LANGGRAPH_PID
+}
+
+# Function to start web application in development mode
+function start_dev_web {
+  echo -e "${GREEN}Starting web application in development mode...${NC}"
+  
+  if [ -d "web" ]; then
+    # Check if package.json exists
+    if [ -f "web/package.json" ]; then
+      cd web
+      pnpm install
+      pnpm dev
+    else
+      echo -e "${RED}❌ web/package.json not found. Web application could not be started.${NC}"
+      exit 1
+    fi
+  else
+    echo -e "${RED}❌ web directory not found. Web application could not be started.${NC}"
+    exit 1
+  fi
+}
+
 # Main script logic
 case "$1" in
   build)
@@ -216,6 +388,16 @@ case "$1" in
     ;;
   clean)
     clean_stack
+    ;;
+  dev)
+    check_dev_tools
+    create_dev_env_files
+    start_dev_langgraph
+    ;;
+  dev-web)
+    check_dev_tools
+    create_dev_env_files
+    start_dev_web
     ;;
   help|--help|-h)
     show_usage
