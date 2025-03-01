@@ -37,6 +37,11 @@ build
 dist
 **/dist
 
+# Docker files
+.docker
+docker-compose.yml
+Dockerfile*
+
 # Logs
 *.log
 npm-debug.log*

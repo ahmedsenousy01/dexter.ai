@@ -1,8 +1,9 @@
 {
-  "dockerfile_lines": [],
+  "dockerfile_lines": ["RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*"],
   "graphs": {
     "main": "./src/main.py:app"
   },
   "python_version": "3.13",
-  "dependencies": ["."]
+  "dependencies": ["."],
+  "pyproject": "./pyproject.toml"
 }
