@@ -1,10 +1,35 @@
 [project]
-name = "agent"
+name = "dexter"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "AI-powered cybersecurity assistant with RAG capabilities"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "PyPDF2>=3.0.0",
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+    "langchain-community>=0.0.10",
+    "langchain-openai>=0.0.5",
+    "langchain-google-genai>=0.0.6",
+    "python-dotenv>=1.0.0",
+    "google-generativeai>=0.3.0",
+    "faiss-cpu>=1.7.4",
+    "langgraph>=0.0.15",
+    "typing-extensions>=4.8.0",
+    "openai>=1.12.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.25.0",
+    "langgraph-cli[inmem]>=0.1.74",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["core", "utils", "config"]
 
 [dependency-groups]
 dev = [
