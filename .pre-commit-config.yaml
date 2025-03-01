@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.9.8
+    hooks:
+      # Run the linter.
+      - id: ruff
+        types_or: [python, pyi]
+        args: [--fix]
+        files: ^(web|agent)/.*\.(py|pyi)$
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [python, pyi]
+        files: ^(web|agent)/.*\.(py|pyi)$
+
+  - repo: local
+    hooks:
+      - id: web-format
+        name: Web Format
+        entry: bash -c 'cd web && pnpm format:write && cd .. && git add web/'
+        language: system
+        files: ^web/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: web-lint
+        name: Web Lint
+        entry: bash -c 'cd web && pnpm lint:fix && cd .. && git add web/'
+        language: system
+        files: ^web/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false

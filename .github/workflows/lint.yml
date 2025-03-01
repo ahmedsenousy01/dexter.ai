@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  lint-web:
     runs-on: ubuntu-latest
     env:
       NODE_ENV: development
@@ -25,6 +25,37 @@ jobs:
           version: 8
           run_install: false
 
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install web dependencies
+        working-directory: ./web
+        run: pnpm install
+
+      - name: Run format check for web
+        working-directory: ./web
+        run: pnpm format:check
+
+      - name: Run lint check for web
+        working-directory: ./web
+        run: pnpm lint
+
+  lint-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Create pip cache directory
         run: mkdir -p /home/runner/.cache/pip
 
@@ -35,25 +66,15 @@ jobs:
           cache: "pip"
 
       - name: Install and setup uv
+        working-directory: ./agent
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="/root/.cargo/bin:$PATH"
-          cd agent
-          if [ ! -f "pyproject.toml" ]; then
-            uv init
-          fi
           uv sync --all-extras
 
-      - name: Install dependencies
-        run: pnpm install:all
-
-      - name: Fix and format code
+      - name: Run ruff for Python linting
+        working-directory: ./agent
         run: |
-          pnpm format:write
-          pnpm lint:fix
-
-      - name: Run format check
-        run: pnpm format:check
-
-      - name: Run lint check
-        run: pnpm lint
+          uv pip install ruff
+          uv run ruff check .
+          uv run ruff format --check .

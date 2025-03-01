@@ -30,14 +30,13 @@
     }
   },
   "include": [
-    "eslint.config.cjs",
+    "eslint.config.mjs",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts",
-    ".eslintrc.cjs"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,19 +1,21 @@
-import { createClient, type Client } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { sql } from "@vercel/postgres";
+import { drizzle } from "drizzle-orm/vercel-postgres";
 
 import { env } from "@/env";
-import * as schema from "./schema";
+
+import * as enums from "./schema/enums";
+// Import relations last since they depend on tables
+import "./schema/relations";
+import * as tables from "./schema/tables";
 
 /**
  * Cache the database connection in development. This avoids creating a new connection on every HMR
  * update.
  */
 const globalForDb = globalThis as unknown as {
-  client: Client | undefined;
+  conn: typeof sql | undefined;
 };
+const conn = globalForDb.conn ?? sql;
+if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 
-export const client =
-  globalForDb.client ?? createClient({ url: env.DATABASE_URL });
-if (env.NODE_ENV !== "production") globalForDb.client = client;
-
-export const db = drizzle(client, { schema });
+export const db = drizzle(conn, { schema: { ...tables, ...enums } });

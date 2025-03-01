@@ -24,51 +24,117 @@ While tools like ChatGPT provide general-purpose AI capabilities, Dexter is tail
 
 ### System Requirements
 
-- Ubuntu/WSL2 environment
-- Git
+- Docker and Docker Compose
+- Python 3.13+ (for development)
+- Node.js 20+ (for development)
+- Rust 1.79+ (for development)
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- API keys for:
+  - OpenAI (`OPENAI_API_KEY`)
+  - Google AI (`GOOGLE_API_KEY`)
+  - LangSmith (`LANGSMITH_API_KEY`)
 
 ### Installation
 
+1. **Clone the repository**
+
 ```bash
-# Clone the repository
 git clone https://github.com/ahmedsenousy01/dexter.ai.git
 cd dexter.ai
-
-# Make the setup script executable
-chmod +x setup.sh
-
-# Run the setup script (this will install all dependencies)
-./setup.sh
 ```
 
-The setup script will automatically install and configure:
+2. **Environment Setup**
 
-- 🐍 Python (via UV)
-- 📦 Node.js (via NVM)
-- 📥 pnpm (package manager)
-- 🔧 All project dependencies
-
-### Project Structure
-
-The project consists of three main components:
-
-- 🌐 Web Frontend (Next.js)
-- 🖥️ Server Backend (Hono)
-- 🤖 AI Agent (LangGraph)
-
-### Running the Project
-
-Once everything is installed, you can start all components with a single command:
+Create the necessary environment files:
 
 ```bash
-pnpm start:all
+# Create web/.env file
+cat > web/.env << EOL
+# Web application configuration
+NODE_ENV=production
+DATABASE_URL=file:/app/data/db.sqlite
+LANGGRAPH_API_URL=http://langgraph-api:8000
+EOL
+
+# Create agent/.env file
+cat > agent/.env << EOL
+# API Keys
+GOOGLE_API_KEY="your-google-api-key"
+OPENAI_API_KEY="your-openai-api-key"
+LANGSMITH_API_KEY="your-langsmith-api-key"
+
+# Database configuration
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_PORT=5433
+
+# Service URIs
+REDIS_URI=redis://langgraph-redis:6379
+POSTGRES_URI=postgres://postgres:postgres@langgraph-postgres:5432/postgres?sslmode=disable
+EOL
 ```
 
-This will concurrently run:
+3. **Make the management script executable**
 
-- The Next.js frontend
-- The Hono backend server
-- The LangGraph AI agent
+```bash
+chmod +x dexter.sh
+```
+
+4. **Build and start the application**
+
+```bash
+# Build the LangGraph image
+./dexter.sh build
+
+# Start all services
+./dexter.sh start
+```
+
+The setup includes:
+
+- 🌐 Web Frontend (Next.js)
+- 🤖 LangGraph API service
+- 🗄️ PostgreSQL database
+- 📦 Redis cache
+
+### Using the Management Script
+
+The `dexter.sh` script provides several commands to manage the application:
+
+```bash
+# Check status of all services
+./dexter.sh status
+
+# View logs
+./dexter.sh logs
+
+# View logs for a specific service
+./dexter.sh logs langgraph-api
+
+# Follow logs
+./dexter.sh logs langgraph-api follow
+
+# Test the API
+./dexter.sh test-api
+
+# Restart all services
+./dexter.sh restart
+
+# Stop all services
+./dexter.sh stop
+
+# Stop and remove volumes
+./dexter.sh clean
+```
+
+### Accessing the Services
+
+- Web Application: http://localhost:3000
+- LangGraph API: http://localhost:8123
 
 ## 🗺️ Roadmap
 
@@ -76,6 +142,91 @@ This will concurrently run:
 - [ ] Develop UI/UX for seamless interaction
 - [ ] Improve AI model accuracy with more security-specific datasets
 - [ ] Beta testing with security professionals
+
+## Development
+
+For development, you can run the services separately:
+
+### Prerequisites
+
+- Python 3.13+
+- Node.js 20+
+- Rust 1.79+
+
+### Install Development Tools
+
+We provide a convenient script to install all required development tools:
+
+```bash
+# Make the script executable
+chmod +x scripts/install_dev_tools.sh
+
+# Run the installation script
+./scripts/install_dev_tools.sh
+```
+
+This script installs:
+
+- Rust (via rustup)
+- Node.js v20 (via NVM)
+- uv (Python package manager)
+
+The script includes status checks to verify each tool is installed correctly.
+
+### Development Mode
+
+You can use the `dexter.sh` script to run the application in development mode:
+
+```bash
+# Start LangGraph API in development mode
+./dexter.sh dev
+
+# In a separate terminal, start the web application in development mode
+./dexter.sh dev-web
+```
+
+The development mode provides:
+
+1. Automatic environment setup (creates necessary .env files if they don't exist)
+2. Checks for required development tools and installs them if needed
+3. Runs the LangGraph API in development mode with hot reloading
+4. Runs the web application with hot reloading
+
+### Manual Development Setup
+
+If you prefer to start services manually:
+
+#### Agent Development
+
+```bash
+cd agent
+
+# Start the LangGraph development server
+uv run langgraph dev --config langgraph-dev.json --no-browser
+```
+
+The LangGraph server will be available at:
+
+- API: http://localhost:2024
+- Docs: http://localhost:2024/docs
+- LangGraph Studio Web UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+
+#### Web Development
+
+```bash
+cd web
+pnpm install
+pnpm dev
+```
+
+### Development Services
+
+When running in development mode, the following services will be available:
+
+- LangGraph API: http://localhost:2024
+- LangGraph API Docs: http://localhost:2024/docs
+- LangGraph Studio: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+- Web Application: http://localhost:3000
 
 ---
 

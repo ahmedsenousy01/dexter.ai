@@ -1,42 +1,83 @@
-# dependencies
+# Dependencies
 **/node_modules/
-
-# Next.js build output
-**/.next/
-**/out/
-
-# Hono and other build output directories
-**/build/
-**/dist/
-
-# Environment variable files
-.env*
-
-# Log files
-pnpm-debug.log*
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Coverage directory
-**/coverage/
-
-# pnpm lock file
+**/.pnpm-store/
+**/package-lock.json
+**/yarn.lock
 **/pnpm-lock.yaml
 
-# next.js
-**/next-env.d.ts
-
-# vercel
-**/.vercel
-
-# typescript
+# Build outputs
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/coverage/
 **/*.tsbuildinfo
 
-# idea files
-.idea
+# Environment and secrets
+**/.env*
+**/.env.local
+**/.env.*.local
+**/*.pem
+!**/.env.example
+!**/.env.dev.example
 
-# misc
-**/.venv
+# Debug logs
+**/logs/
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+# IDE - VSCode
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IDE - JetBrains
+**/.idea/
+**/*.iml
+**/*.ipr
+**/*.iws
+
+# IDE - Eclipse
+**/.project
+**/.classpath
+**/.settings/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/.Python
+**/.venv/
+**/venv/
+**/ENV/
 **/.python-version
+**/*.egg-info/
+**/.installed.cfg
+**/*.egg
+**/.langgraph_api/
+
+# System files
+**/.DS_Store
+**/Thumbs.db
+**/*.swp
+**/*.swo
+**/*~
+
+# Next.js
+**/next-env.d.ts
+**/.vercel/
+
+# Testing
+**/.nyc_output/
+**/junit.xml
+
+# Misc
+**/.cache/
+**/.temp/
+**/.tmp/
+**/tmp/
+**/temp/
