@@ -237,6 +237,10 @@ function push_db_schema {
   
   # Push schema changes
   pnpm db:push
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ Failed to push database schema changes!${NC}"
+    exit 1
+  fi
   
   echo -e "${GREEN}✅ Database schema changes pushed successfully!${NC}"
   cd "$SCRIPT_DIR" || exit
