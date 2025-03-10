@@ -496,9 +496,10 @@ async function sendMessageToAI(conversationId: string, userId: string, content: 
     .insert(messages)
     .values({
       conversationId,
-      senderId: userId, // Using the user's ID but marking as AI response
+      senderId: "system-ai", // Use a dedicated system user ID for AI
       content: aiResponse,
       isAiResponse: true,
+      requestedBy: userId, // Track which user requested this response
     })
     .returning();
 }

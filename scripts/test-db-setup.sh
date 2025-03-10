@@ -44,7 +44,7 @@ if [ ! -f "$WEB_ENV_FILE" ]; then
   echo -e "${YELLOW}Creating web/.env file...${NC}"
   mkdir -p web
   cat > web/.env << EOL
-# Web application configuration
+# DEVELOPMENT ONLY - DO NOT USE THESE VALUES IN PRODUCTION
 NODE_ENV=development
 LANGGRAPH_API_URL=http://localhost:2024
 
@@ -65,9 +65,11 @@ fi
 echo -e "${YELLOW}Creating environment file...${NC}"
 cat > "$AGENT_ENV_FILE" << EOL
 # API Keys 
-GOOGLE_API_KEY=your-google-api-key
-OPENAI_API_KEY=your-openai-api-key
-LANGSMITH_API_KEY=your-langsmith-api-key
+# WARNING: Replace these placeholder values with your actual API keys
+# DO NOT commit actual API keys to version control
+GOOGLE_API_KEY=REPLACE_WITH_YOUR_GOOGLE_API_KEY
+OPENAI_API_KEY=REPLACE_WITH_YOUR_OPENAI_API_KEY
+LANGSMITH_API_KEY=REPLACE_WITH_YOUR_LANGSMITH_API_KEY
 
 # Database configuration for local testing
 POSTGRES_DB=langgraph
