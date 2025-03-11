@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { sql } from "drizzle-orm";
 import { boolean, index, primaryKey, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
@@ -27,7 +26,7 @@ export const documentVersions = createTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull()
   },
-  (table) => ({
+  () => ({
     // Enforce semantic versioning format (major.minor.patch)
     versionFormatCheck: sql`CHECK (version ~ '^[0-9]+\.[0-9]+\.[0-9]+$')`
   })
