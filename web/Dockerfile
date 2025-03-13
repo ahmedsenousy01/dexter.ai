@@ -16,10 +16,6 @@ COPY . .
 # Set environment variables
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV SKIP_ENV_VALIDATION 1
-ENV DATABASE_URL file:/app/data/db.sqlite
-
-# Create data directory for SQLite database
-RUN mkdir -p /app/data
 
 # Build application
 RUN pnpm build

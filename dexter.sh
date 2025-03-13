@@ -27,9 +27,11 @@ function show_usage {
   echo -e "  ${GREEN}logs${NC}        - View logs from all services"
   echo -e "  ${GREEN}status${NC}      - Check the status of all services"
   echo -e "  ${GREEN}test-api${NC}    - Test if the LangGraph API is running correctly"
+  echo -e "  ${GREEN}test-db${NC}     - Test database setup using local services"
   echo -e "  ${GREEN}clean${NC}       - Stop services and remove volumes"
   echo -e "  ${GREEN}dev${NC}         - Start services in development mode"
   echo -e "  ${GREEN}dev-web${NC}     - Start web application in development mode"
+  echo -e "  ${GREEN}db:push${NC}     - Push database schema changes"
   echo -e "  ${GREEN}help${NC}        - Show this help message"
   echo ""
 }
@@ -192,10 +194,56 @@ function test_api {
   echo -e "${GREEN}✅ LangGraph API is running correctly!${NC}"
 }
 
+# Function to test database setup
+function test_db_setup {
+  echo -e "${GREEN}Testing database setup...${NC}"
+  
+  # Check if test-db-setup.sh exists
+  if [ ! -f "${SCRIPT_DIR}/scripts/test-db-setup.sh" ]; then
+    echo -e "${RED}Error: test-db-setup.sh not found${NC}"
+    echo "Please create the test-db-setup.sh script first."
+    exit 1
+  fi
+  
+  # Make sure the script is executable
+  chmod +x "${SCRIPT_DIR}/scripts/test-db-setup.sh"
+  
+  # Run the test script
+  "${SCRIPT_DIR}/scripts/test-db-setup.sh"
+}
+
 # Function to clean up
 function clean_stack {
   echo -e "${GREEN}Stopping services and removing volumes...${NC}"
   docker compose -f "$COMPOSE_FILE" --env-file "$AGENT_ENV_FILE" down -v
+}
+
+# Function to push database schema changes
+function push_db_schema {
+  echo -e "${GREEN}Pushing database schema changes...${NC}"
+  
+  # Check if postgres is running
+  if ! docker compose -f "$COMPOSE_FILE" --env-file "$AGENT_ENV_FILE" ps --status running postgres | grep -q "postgres"; then
+    echo -e "${YELLOW}⚠️ PostgreSQL is not running. Starting it now...${NC}"
+    docker compose -f "$COMPOSE_FILE" --env-file "$AGENT_ENV_FILE" up -d postgres
+    
+    # Wait for PostgreSQL to be ready
+    echo -e "${YELLOW}Waiting for PostgreSQL to be ready...${NC}"
+    sleep 10
+  fi
+  
+  # Navigate to the web directory
+  cd "$SCRIPT_DIR/web" || { echo -e "${RED}Error: web directory not found${NC}"; exit 1; }
+  
+  # Push schema changes
+  pnpm db:push
+  if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ Failed to push database schema changes!${NC}"
+    exit 1
+  fi
+  
+  echo -e "${GREEN}✅ Database schema changes pushed successfully!${NC}"
+  cd "$SCRIPT_DIR" || exit
 }
 
 # Function to check for required development tools
@@ -278,8 +326,17 @@ function create_dev_env_files {
     cat > web/.env << EOL
 # Web application configuration
 NODE_ENV=development
-DATABASE_URL=file:./data/db.sqlite
 LANGGRAPH_API_URL=http://localhost:2024
+
+# Drizzle - Use your own Postgres url
+POSTGRES_URL="your-postgres-url"
+POSTGRES_PRISMA_URL="your-postgres-url"
+POSTGRES_URL_NO_SSL="your-postgres-url"
+POSTGRES_URL_NON_POOLING="your-postgres-url"
+POSTGRES_USER="your-postgres-user"
+POSTGRES_HOST="your-postgres-host"
+POSTGRES_PASSWORD="your-postgres-password"
+POSTGRES_DATABASE="your-postgres-database"
 EOL
     echo -e "${GREEN}✅ web/.env created successfully!${NC}"
   fi
@@ -295,14 +352,14 @@ OPENAI_API_KEY="your-openai-api-key"
 LANGSMITH_API_KEY="your-langsmith-api-key"
 
 # Database configuration
-POSTGRES_DB=postgres
+POSTGRES_DB=langgraph
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_PORT=5433
 
 # Service URIs
 REDIS_URI=redis://localhost:6379
-POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+POSTGRES_URI=postgres://postgres:postgres@localhost:5432/langgraph?sslmode=disable
 EOL
     echo -e "${GREEN}✅ agent/.env created successfully!${NC}"
     echo -e "${YELLOW}⚠️ Please update agent/.env with your actual API keys${NC}"
@@ -386,8 +443,14 @@ case "$1" in
   test-api)
     test_api
     ;;
+  test-db)
+    test_db_setup
+    ;;
   clean)
     clean_stack
+    ;;
+  db:push)
+    push_db_schema
     ;;
   dev)
     check_dev_tools

@@ -11,8 +11,6 @@ services:
       - "3000:3000"
     env_file:
       - ./web/.env
-    volumes:
-      - sqlite-data:/app/data
     depends_on:
       langgraph-api:
         condition: service_healthy
@@ -80,5 +78,4 @@ networks:
 
 # Volumes
 volumes:
-  sqlite-data:
   langgraph-data:

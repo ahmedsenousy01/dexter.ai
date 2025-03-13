@@ -58,6 +58,7 @@
 **/*.egg-info/
 **/.installed.cfg
 **/*.egg
+**/.langgraph_api/
 
 # System files
 **/.DS_Store
