@@ -1,6 +1,7 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import NextAuth, { type DefaultSession } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
+import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { useSession } from "next-auth/react";
 
@@ -42,13 +43,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true
+    }),
+    GithubProvider({
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true
     })
   ],
   session: {
     strategy: "jwt"
   },
   pages: {
-    signIn: "/auth/signin"
+    signIn: "/auth"
   },
   debug: env.NODE_ENV === "development"
 });
